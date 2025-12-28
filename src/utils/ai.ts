@@ -11,7 +11,11 @@ export async function generateAIResponse(prompt: string, config: AIConfig): Prom
   }
 
   if (!apiKey) {
-    throw new Error('API Key is missing');
+    // Return Mock Data if no API Key is provided
+    console.warn('No API Key provided, returning mock response.');
+    return new Promise(resolve => setTimeout(() => {
+      resolve(`Mock response for: "${prompt.substring(0, 20)}..." (No API Key)`);
+    }, 1500));
   }
 
   try {
@@ -60,7 +64,14 @@ export async function generateTaskPlan(taskTitle: string, config: AIConfig): Pro
   }
 
   if (!apiKey) {
-    throw new Error('API Key is missing');
+    console.warn('No API Key provided, returning mock plan.');
+    return new Promise(resolve => setTimeout(() => {
+      resolve(`
+- [ ] Step 1: Planning for "${taskTitle}"
+- [ ] Step 2: Execution
+- [ ] Step 3: Review
+      `);
+    }, 1000));
   }
 
   try {
@@ -110,7 +121,17 @@ export async function analyzeTaskInput(input: string, config: AIConfig): Promise
   }
 
   if (!apiKey) {
-    throw new Error('API Key is missing');
+    console.warn('No API Key provided, returning mock analysis.');
+    return new Promise(resolve => setTimeout(() => {
+      resolve({
+        title: input.length > 20 ? input.substring(0, 20) + '...' : input,
+        plan: `
+- [ ] Analyze "${input}"
+- [ ] Break down tasks
+- [ ] Start execution
+        `
+      });
+    }, 1500));
   }
 
   try {

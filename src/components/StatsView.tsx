@@ -12,9 +12,10 @@ interface StatsViewProps {
   language: Language;
   tasks: Task[];
   aiConfig?: AIConfig;
+  onDebugFill?: () => void;
 }
 
-export default function StatsView({ sessions, totalTrees, language, tasks, aiConfig }: StatsViewProps) {
+export default function StatsView({ sessions, totalTrees, language, tasks, aiConfig, onDebugFill }: StatsViewProps) {
   const t = translations[language] || translations['en'];
   const [aiSummary, setAiSummary] = useState<string>('');
   const [loadingAI, setLoadingAI] = useState(false);
@@ -58,16 +59,13 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
   }
 
   const handleGenerateSummary = async () => {
-    if (!aiConfig?.apiKey) {
-      alert('Please set your OpenAI API Key in Settings first.');
-      return;
-    }
+    // Removed strict API Key check to allow Mock mode
     
     setLoadingAI(true);
     try {
       const promptData = formatDataForAI(sessions, tasks);
       const fullPrompt = `${t.aiPrompt}\n\nData:\n${promptData}`;
-      const response = await generateAIResponse(fullPrompt, aiConfig);
+      const response = await generateAIResponse(fullPrompt, aiConfig || { apiKey: '' });
       setAiSummary(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -178,6 +176,25 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
             <ReactMarkdown>{aiSummary}</ReactMarkdown>
           </div>
         )}
+      </div>
+
+      {/* Debug Tools (Only in Dev or if explicitly enabled) */}
+      <div style={{ marginTop: '2rem', borderTop: '1px dashed #ccc', paddingTop: '1rem', opacity: 0.5 }}>
+          <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>🔧 Developer Tools</p>
+          <button 
+            onClick={onDebugFill}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#607d8b',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.8rem'
+            }}
+          >
+            Generate Test Data (Forest & Commit)
+          </button>
       </div>
     </div>
   );

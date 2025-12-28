@@ -249,8 +249,30 @@ export default function Dashboard() {
       return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleDebugFill = () => {
+    // Generate random sessions for the last 30 days
+    const newSessions: Session[] = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Random duration between 0 and 200 minutes
+      const duration = Math.floor(Math.random() * 200) * 60;
+      if (duration > 0) {
+        newSessions.push({ date: dateStr, duration });
+      }
+    }
+    
+    setSessions(prev => [...prev, ...newSessions]);
+    setTrees(prev => prev + 15); // Add 15 trees
+    notify(t.appTitle, "Debug data added!");
+  };
+
   return (
-    <div className="dashboard-container" style={{ padding: '0', textAlign: 'center', position: 'relative', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="dashboard-container">
       
       <TopBar 
         activeTab={activeTab}
@@ -260,7 +282,7 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
+      <div className="dashboard-content">
         {activeTab === 'timer' ? (
           <>
             <TimerDisplay 
@@ -298,6 +320,7 @@ export default function Dashboard() {
             language={config.language as Language} 
             tasks={tasks}
             aiConfig={config.aiConfig}
+            onDebugFill={handleDebugFill}
           />
         )}
       </div>

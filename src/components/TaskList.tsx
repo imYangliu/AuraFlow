@@ -32,101 +32,63 @@ export default function TaskList({
   const filteredTasks = tasks.filter(t => showArchive ? t.completed : !t.completed);
 
   return (
-    <div className="tasks-section" style={{ textAlign: 'left', maxWidth: '600px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+    <div className="tasks-section">
+      <div className="tasks-header">
+        <div className="tasks-tabs">
            <button 
              onClick={() => setShowArchive(false)}
-             style={{ 
-               background: 'none', border: 'none', fontWeight: !showArchive ? 'bold' : 'normal',
-               color: !showArchive ? '#333' : '#999', cursor: 'pointer', fontSize: '1.1rem'
-             }}
+             className={`tab-btn ${!showArchive ? 'active' : ''}`}
            >
              {t.activeTasks}
            </button>
            <button 
              onClick={() => setShowArchive(true)}
-             style={{ 
-               background: 'none', border: 'none', fontWeight: showArchive ? 'bold' : 'normal',
-               color: showArchive ? '#333' : '#999', cursor: 'pointer', fontSize: '1.1rem'
-             }}
+             className={`tab-btn ${showArchive ? 'active' : ''}`}
            >
              {t.archive}
            </button>
         </div>
         <button 
           onClick={onShowEntry} 
-          style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', borderRadius: '20px', backgroundColor: '#007bff', color: 'white', border: 'none' }}
+          className="btn-new-session"
         >
           {t.newSession}
         </button>
       </div>
       
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul className="tasks-list">
         {filteredTasks.slice().reverse().map((task) => (
           <li 
             key={task.id} 
             onClick={() => onSelectTask(task)}
-            style={{ 
-              marginBottom: '0.8rem', 
-              padding: '1rem', 
-              border: '1px solid #eee', 
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              backgroundColor: activeTaskId === task.id ? '#f0f9ff' : 'white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-              transition: 'all 0.2s',
-              cursor: 'pointer'
-            }}
+            className={`task-item ${activeTaskId === task.id ? 'active' : ''}`}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+            <div className="task-content">
               {!task.completed && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onToggleTask(task.id); }}
-                  style={{ 
-                    borderRadius: '50%', 
-                    width: '40px', 
-                    height: '40px', 
-                    padding: 0,
-                    fontSize: '1.2rem',
-                    backgroundColor: activeTaskId === task.id ? '#007bff' : '#f5f5f5',
-                    color: activeTaskId === task.id ? 'white' : '#666',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
+                  className={`btn-play-pause ${activeTaskId === task.id ? 'active' : 'inactive'}`}
                 >
                   {activeTaskId === task.id ? '⏸' : '▶'}
                 </button>
               )}
               
-              <div style={{ opacity: task.completed ? 0.6 : 1 }}>
-                <div style={{ 
-                  fontWeight: 600, 
-                  fontSize: '1.1rem', 
-                  marginBottom: '4px',
-                  textDecoration: task.completed ? 'line-through' : 'none'
-                }}>
+              <div className={`task-info ${task.completed ? 'opacity-60' : ''}`}>
+                <div className={`task-title ${task.completed ? 'text-strike' : ''}`}>
                   {task.title}
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#888' }}>
+                <div className="task-meta">
                   {formatTime(task.timeSpent)} • {task.pomodoros || 0} 🍅 
-                  {task.status === 'paused' && <span style={{ color: '#ff9800', marginLeft: '5px' }}>({t.paused})</span>}
+                  {task.status === 'paused' && <span className="text-warning" style={{ marginLeft: '5px' }}>({t.paused})</span>}
                 </div>
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="task-actions">
               {!task.completed && (
                 <button
                   onClick={(e) => onManualComplete(task.id, e)}
-                  style={{
-                    background: 'none', border: 'none', fontSize: '1.2rem',
-                    cursor: 'pointer', color: '#28a745',
-                    padding: '0.5rem'
-                  }}
+                  className="btn-icon text-success"
                   title={t.markComplete}
                 >
                   ✔
@@ -134,7 +96,7 @@ export default function TaskList({
               )}
               <button 
                 onClick={(e) => onDeleteTask(task.id, e)}
-                style={{ background: 'none', color: '#ff4d4f', fontSize: '1.2rem', padding: '0.5rem', border: 'none', cursor: 'pointer', opacity: 0.5 }}
+                className="btn-icon text-danger"
                 title={t.delete}
               >
                 ×
