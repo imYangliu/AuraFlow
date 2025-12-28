@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { translations } from '../i18n/translations';
 import type { Task, Session, AIConfig, Language } from '../types';
 import { ActivityCalendar } from 'react-activity-calendar';
@@ -40,22 +40,38 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
     return acc;
   }, {} as Record<string, number>);
 
-  // Generate data for the last 365 days (or at least cover existing data)
-  const calendarData = Object.entries(sessionsByDate).map(([date, count]) => {
-    // Determine level based on duration (simple heuristic)
+  // Generate data for the last 365 days
+  const calendarData: { date: string; count: number; level: number }[] = [];
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(endDate.getDate() - 364);
+
+  // Helper to format date as YYYY-MM-DD safely in local time
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Clone startDate to iterate without modifying the original
+  const currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate) {
+    const dateStr = formatDate(currentDate);
+    const count = sessionsByDate[dateStr] || 0;
+    
+    // Determine level based on duration
     let level = 0;
     if (count > 0) level = 1;
     if (count > 60) level = 2;
     if (count > 120) level = 3;
     if (count > 240) level = 4;
-    
-    return { date, count, level };
-  });
 
-  // Ensure we have at least one entry if empty to avoid crashes (optional, library handles it usually)
-  if (calendarData.length === 0) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      calendarData.push({ date: todayStr, count: 0, level: 0 });
+    calendarData.push({ date: dateStr, count, level });
+    
+    // Move to next day
+    currentDate.setDate(currentDate.getDate() + 1);
   }
 
   const handleGenerateSummary = async () => {
@@ -76,45 +92,42 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+    <div className="stats-container">
       <h2>{t.forest}</h2>
       
       {/* Forest Visualization */}
-      <div style={{ 
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', 
-        gap: '10px', padding: '2rem', backgroundColor: '#e8f5e9', borderRadius: '12px',
-        marginBottom: '2rem', minHeight: '200px', maxHeight: '300px', overflowY: 'auto'
-      }}>
+      <div className="forest-grid">
         {Array.from({ length: totalTrees }).map((_, i) => (
-          <div key={i} style={{ fontSize: '2rem', animation: 'pulse 1s ease-out' }}>🌲</div>
+          <div key={i} className="forest-tree">🌲</div>
         ))}
         {totalTrees === 0 && (
-          <div style={{ gridColumn: '1/-1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+          <div className="no-data-msg">
             {t.noData}
           </div>
         )}
       </div>
 
       {/* Basic Stats Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.9rem', color: '#666', textTransform: 'uppercase' }}>{t.totalTrees}</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#2e7d32' }}>{totalTrees}</div>
+      <div className="stats-cards">
+        <div className="stat-card">
+          <div className="stat-label">{t.totalTrees}</div>
+          <div className="stat-value green">{totalTrees}</div>
         </div>
-        <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.9rem', color: '#666', textTransform: 'uppercase' }}>{t.today}</div>
-          <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1976d2' }}>{formatTime(todayFocus)}</div>
+        <div className="stat-card">
+          <div className="stat-label">{t.today}</div>
+          <div className="stat-value blue">{formatTime(todayFocus)}</div>
         </div>
       </div>
 
       {/* Heatmap Section */}
-      <div style={{ textAlign: 'left', marginBottom: '3rem' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div className="heatmap-section">
+        <h3 className="heatmap-header">
           {t.heatmap}
         </h3>
-        <div style={{ padding: '2rem', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', overflowX: 'auto' }}>
+        <div className="heatmap-content">
             <ActivityCalendar 
                 data={calendarData}
+                colorScheme="light"
                 labels={{
                     legend: {
                         less: t.less,
@@ -134,9 +147,10 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
                     dark: ['#161b22', '#0e4429', '#006d32', '#26a641', '#39d353'],
                 }}
                 renderBlock={(block, activity) => (
-                    <div data-tooltip-id="react-tooltip" data-tooltip-content={`${activity.date}: ${activity.count} mins`}>
-                        {block}
-                    </div>
+                    React.cloneElement(block, {
+                        'data-tooltip-id': 'react-tooltip',
+                        'data-tooltip-content': `${activity.date}: ${activity.count} ${t.minutes}`,
+                    })
                 )}
             />
             <Tooltip id="react-tooltip" />
@@ -144,54 +158,31 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
       </div>
 
       {/* AI Summary Section */}
-      <div style={{ textAlign: 'left', marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h3 style={{ margin: 0 }}>✨ {t.aiSummary}</h3>
+      <div className="ai-section">
+        <div className="ai-header">
+          <h3>✨ {t.aiSummary}</h3>
           <button 
             onClick={handleGenerateSummary}
             disabled={loadingAI}
-            style={{ 
-              padding: '0.5rem 1rem', 
-              backgroundColor: loadingAI ? '#ccc' : '#8e44ad', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '20px',
-              cursor: loadingAI ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '5px'
-            }}
+            className="btn-generate-ai"
           >
             {loadingAI ? t.generating : t.generateSummary}
           </button>
         </div>
         
         {aiSummary && (
-          <div style={{ 
-            padding: '1.5rem', 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '12px', 
-            borderLeft: '4px solid #8e44ad',
-            lineHeight: '1.6',
-            color: '#333'
-          }}>
+          <div className="ai-summary-box">
             <ReactMarkdown>{aiSummary}</ReactMarkdown>
           </div>
         )}
       </div>
 
       {/* Debug Tools (Only in Dev or if explicitly enabled) */}
-      <div style={{ marginTop: '2rem', borderTop: '1px dashed #ccc', paddingTop: '1rem', opacity: 0.5 }}>
-          <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>🔧 Developer Tools</p>
+      <div className="debug-section">
+          <p className="debug-label">🔧 Developer Tools</p>
           <button 
             onClick={onDebugFill}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#607d8b',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '0.8rem'
-            }}
+            className="btn-debug"
           >
             Generate Test Data (Forest & Commit)
           </button>

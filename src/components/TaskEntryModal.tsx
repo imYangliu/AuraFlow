@@ -13,6 +13,8 @@ interface TaskEntryProps {
 
 export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiConfig }: TaskEntryProps) {
   const [input, setInput] = useState('');
+  const [plan, setPlan] = useState('');
+  const [showPlan, setShowPlan] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const t = translations[language] || translations['en'];
 
@@ -25,7 +27,7 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
 
   const handleSubmit = () => {
     if (input.trim()) {
-      onStart(input);
+      onStart(input, plan);
     }
   };
 
@@ -35,11 +37,12 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
     setIsAnalyzing(true);
     try {
       const result = await analyzeTaskInput(input, aiConfig || { apiKey: '' });
-      onStart(result.title, result.plan);
+      setInput(result.title);
+      setPlan(result.plan);
+      setShowPlan(true);
     } catch (error) {
       console.error(error);
-      alert('AI Analysis failed. Starting with original input.');
-      onStart(input);
+      alert('AI Analysis failed. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -54,12 +57,12 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmit()}
           placeholder={t.enterTask}
           className="task-input"
         />
         
-        {suggestions.length > 0 && (
+        {suggestions.length > 0 && !showPlan && (
           <ul className="suggestions-list">
             {suggestions.map(t => (
               <li 
@@ -72,6 +75,29 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
             ))}
           </ul>
         )}
+
+        {showPlan && (
+          <div style={{ marginTop: '1rem', width: '100%' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', textAlign: 'left', fontWeight: 500 }}>
+              {t.plan || 'Plan'}
+            </label>
+            <textarea
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              placeholder="Task plan..."
+              style={{
+                width: '100%',
+                minHeight: '120px',
+                padding: '1rem',
+                borderRadius: '12px',
+                border: '1px solid #ddd',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="modal-actions">
@@ -83,16 +109,14 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
           {t.startFocus}
         </button>
 
-        {true && (
-          <button 
-            onClick={handleAIAssist}
-            disabled={isAnalyzing || !input.trim()}
-            className="btn-ai"
-            title="Generate task name and plan from description"
-          >
-            {isAnalyzing ? t.generating : '✨ AI'}
-          </button>
-        )}
+        <button 
+          onClick={handleAIAssist}
+          disabled={isAnalyzing || !input.trim()}
+          className="btn-ai"
+          title="Generate task name and plan from description"
+        >
+          {isAnalyzing ? t.generating : (showPlan ? '✨ Regenerate Plan' : '✨ AI Plan')}
+        </button>
       </div>
     </div>
   );

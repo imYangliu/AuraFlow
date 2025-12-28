@@ -223,7 +223,9 @@ export default function Dashboard() {
       setMode('work');
       setTimeLeft(Math.floor(config.workDuration * 60));
       setIsActive(true);
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'in_progress' } : t));
+      // If task was completed, reactivate it (remove completion status for the session)
+      // Or just keep it completed but allow timing? Usually we want to mark it in_progress if we are working on it.
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'in_progress', completed: false, completedAt: undefined } : t));
     }
   };
 
@@ -271,6 +273,14 @@ export default function Dashboard() {
     notify(t.appTitle, "Debug data added!");
   };
 
+  const handleBreakTest = () => {
+    safeInvoke('open_break_window');
+    // Fallback for web preview: simulate by navigating or just notifying
+    if (!window.__TAURI_INTERNALS__) {
+        window.location.href = '/break';
+    }
+  };
+
   return (
     <div className="dashboard-container">
       
@@ -298,6 +308,15 @@ export default function Dashboard() {
               onFinishEarly={finishTaskEarly}
               formatTime={formatTime}
             />
+
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <button 
+                    onClick={handleBreakTest}
+                    style={{ fontSize: '0.8rem', padding: '0.5rem 1rem', background: 'none', border: '1px dashed #ccc', color: '#666', cursor: 'pointer', borderRadius: '4px' }}
+                >
+                    ☕ Test Break Window
+                </button>
+            </div>
 
             <TaskList 
               tasks={tasks}

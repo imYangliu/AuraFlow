@@ -40,23 +40,16 @@ export default function TaskDetailsModal({ task, onClose, onUpdate, language, ai
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', 
-      alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white', borderRadius: '12px', padding: '2rem',
-        width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ margin: 0 }}>{t.details}</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+    <div className="modal-backdrop">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>{t.details}</h2>
+          <button onClick={onClose} className="modal-close-btn">×</button>
         </div>
 
         <div style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>{task.title}</h3>
-          <div style={{ display: 'flex', gap: '1rem', color: '#666', fontSize: '0.9rem' }}>
+          <div className="details-stats">
             <span>{t.status}: {task.status || (task.completed ? t.completed : t.pending)}</span>
             <span>{t.totalFocus}: {formatTime(task.timeSpent)}</span>
             <span>{t.pomodoros}: {task.pomodoros || 0}</span>
@@ -68,18 +61,13 @@ export default function TaskDetailsModal({ task, onClose, onUpdate, language, ai
           )}
         </div>
 
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div className="plan-section">
+          <div className="plan-header">
             <label style={{ fontWeight: 600 }}>{t.plan}</label>
             <button 
               onClick={handleGeneratePlan}
-              disabled={isGenerating || !aiConfig.apiKey}
-              style={{
-                fontSize: '0.8rem', padding: '0.3rem 0.8rem', borderRadius: '12px',
-                backgroundColor: '#e3f2fd', color: '#0d47a1', border: 'none',
-                cursor: isGenerating || !aiConfig.apiKey ? 'not-allowed' : 'pointer',
-                opacity: isGenerating || !aiConfig.apiKey ? 0.6 : 1
-              }}
+              disabled={isGenerating}
+              className="btn-generate-plan"
             >
               {isGenerating ? t.generating : `✨ ${t.generatePlan}`}
             </button>
@@ -88,19 +76,15 @@ export default function TaskDetailsModal({ task, onClose, onUpdate, language, ai
             value={plan}
             onChange={(e) => setPlan(e.target.value)}
             placeholder={t.aiPlanPrompt + task.title}
-            style={{
-              width: '100%', minHeight: '150px', padding: '1rem',
-              borderRadius: '8px', border: '1px solid #ddd',
-              fontFamily: 'inherit', resize: 'vertical'
-            }}
+            className="plan-textarea"
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-          <button onClick={onClose} style={{ padding: '0.6rem 1.5rem', borderRadius: '20px', border: '1px solid #ddd', background: 'white' }}>
+        <div className="modal-footer">
+          <button onClick={onClose} className="btn-cancel">
             {t.cancel}
           </button>
-          <button onClick={handleSave} style={{ padding: '0.6rem 1.5rem', borderRadius: '20px', border: 'none', background: '#007bff', color: 'white' }}>
+          <button onClick={handleSave} className="btn-save">
             {t.save}
           </button>
         </div>

@@ -28,6 +28,14 @@ export default function BreakView() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const handleSkip = () => {
+    safeInvoke('close_break_window');
+    // Fallback for browser preview
+    if (!window.__TAURI_INTERNALS__) {
+        window.history.back();
+    }
+  };
+
   return (
     <div className="break-container" style={{
       display: 'flex',
@@ -43,7 +51,31 @@ export default function BreakView() {
       <div style={{ fontSize: '5rem', margin: '2rem 0' }}>{formatTime(timeLeft)}</div>
       <p style={{ fontSize: '1.5rem' }}>Your forest is growing...</p>
       <div style={{ fontSize: '4rem', animation: 'pulse 2s infinite' }}>🌳</div>
-      <p style={{ marginTop: '2rem', opacity: 0.7 }}>Window will close automatically when time is up.</p>
+      
+      <button 
+        onClick={handleSkip}
+        style={{
+            marginTop: '3rem',
+            padding: '0.8rem 2rem',
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(255,255,255,0.3)',
+            color: 'rgba(255,255,255,0.6)',
+            borderRadius: '30px',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'white';
+            e.currentTarget.style.color = 'white';
+        }}
+        onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+            e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+        }}
+      >
+        Skip Break
+      </button>
     </div>
   );
 }

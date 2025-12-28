@@ -64,14 +64,13 @@ export default function TaskList({
             className={`task-item ${activeTaskId === task.id ? 'active' : ''}`}
           >
             <div className="task-content">
-              {!task.completed && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onToggleTask(task.id); }}
-                  className={`btn-play-pause ${activeTaskId === task.id ? 'active' : 'inactive'}`}
-                >
-                  {activeTaskId === task.id ? '⏸' : '▶'}
-                </button>
-              )}
+              {/* Always show play/pause button, even if completed, to allow restarting */}
+              <button 
+                onClick={(e) => { e.stopPropagation(); onToggleTask(task.id); }}
+                className={`btn-play-pause ${activeTaskId === task.id ? 'active' : 'inactive'}`}
+              >
+                {activeTaskId === task.id ? '⏸' : '▶'}
+              </button>
               
               <div className={`task-info ${task.completed ? 'opacity-60' : ''}`}>
                 <div className={`task-title ${task.completed ? 'text-strike' : ''}`}>
