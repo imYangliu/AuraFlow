@@ -7,6 +7,12 @@ export interface AIConfig {
   model?: string;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -15,6 +21,7 @@ export interface Task {
   status?: 'pending' | 'in_progress' | 'paused' | 'completed';
   pomodoros?: number;
   plan?: string;
+  subtasks?: Subtask[];
   completedAt?: string;
 }
 

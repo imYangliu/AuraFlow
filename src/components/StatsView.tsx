@@ -40,11 +40,11 @@ export default function StatsView({ sessions, totalTrees, language, tasks, aiCon
     return acc;
   }, {} as Record<string, number>);
 
-  // Generate data for the last 365 days
+  // Generate data for the last 90 days (approx 3 months)
   const calendarData: { date: string; count: number; level: number }[] = [];
   const endDate = new Date();
   const startDate = new Date();
-  startDate.setDate(endDate.getDate() - 364);
+  startDate.setDate(endDate.getDate() - 90);
 
   // Helper to format date as YYYY-MM-DD safely in local time
   const formatDate = (date: Date) => {

@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { translations } from '../i18n/translations';
 import { analyzeTaskInput } from '../utils/ai';
-import type { Task, AIConfig, Language } from '../types';
+import type { Task, AIConfig, Language, Subtask } from '../types';
 
 interface TaskEntryProps {
   tasks: Task[];
-  onStart: (taskTitle: string, plan?: string) => void;
+  onStart: (taskTitle: string, subtasks?: Subtask[]) => void;
   onCancel: () => void;
   language: Language;
   aiConfig?: AIConfig;
@@ -13,7 +13,7 @@ interface TaskEntryProps {
 
 export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiConfig }: TaskEntryProps) {
   const [input, setInput] = useState('');
-  const [plan, setPlan] = useState('');
+  const [subtasks, setSubtasks] = useState<string[]>([]);
   const [showPlan, setShowPlan] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const t = translations[language] || translations['en'];
@@ -27,7 +27,12 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
 
   const handleSubmit = () => {
     if (input.trim()) {
-      onStart(input, plan);
+      const subtaskObjects: Subtask[] = subtasks.map((st, i) => ({
+        id: `${Date.now()}-${i}`,
+        title: st,
+        completed: false
+      }));
+      onStart(input, subtaskObjects);
     }
   };
 
@@ -38,7 +43,7 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
     try {
       const result = await analyzeTaskInput(input, aiConfig || { apiKey: '' });
       setInput(result.title);
-      setPlan(result.plan);
+      setSubtasks(result.subtasks);
       setShowPlan(true);
     } catch (error) {
       console.error(error);
@@ -46,6 +51,20 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleAddSubtask = () => {
+    setSubtasks([...subtasks, '']);
+  };
+
+  const handleUpdateSubtask = (index: number, value: string) => {
+    const newSubtasks = [...subtasks];
+    newSubtasks[index] = value;
+    setSubtasks(newSubtasks);
+  };
+
+  const handleRemoveSubtask = (index: number) => {
+    setSubtasks(subtasks.filter((_, i) => i !== index));
   };
 
   return (
@@ -78,24 +97,48 @@ export default function TaskEntryModal({ tasks, onStart, onCancel, language, aiC
 
         {showPlan && (
           <div style={{ marginTop: '1rem', width: '100%' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', textAlign: 'left', fontWeight: 500 }}>
-              {t.plan || 'Plan'}
-            </label>
-            <textarea
-              value={plan}
-              onChange={(e) => setPlan(e.target.value)}
-              placeholder="Task plan..."
-              style={{
-                width: '100%',
-                minHeight: '120px',
-                padding: '1rem',
-                borderRadius: '12px',
-                border: '1px solid #ddd',
-                fontFamily: 'inherit',
-                resize: 'vertical',
-                boxSizing: 'border-box'
-              }}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ fontWeight: 500 }}>
+                {t.plan || 'Plan'}
+              </label>
+              <button 
+                onClick={handleAddSubtask}
+                style={{ fontSize: '0.8rem', padding: '2px 6px', cursor: 'pointer' }}
+              >
+                + Add Step
+              </button>
+            </div>
+            
+            <div className="subtasks-container" style={{ 
+              maxHeight: '200px', 
+              overflowY: 'auto',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '0.5rem'
+            }}>
+              {subtasks.map((step, index) => (
+                <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ color: '#888', minWidth: '20px' }}>{index + 1}.</span>
+                  <input
+                    value={step}
+                    onChange={(e) => handleUpdateSubtask(index, e.target.value)}
+                    placeholder="Step description..."
+                    style={{ flex: 1, padding: '4px', borderRadius: '4px', border: '1px solid #eee' }}
+                  />
+                  <button 
+                    onClick={() => handleRemoveSubtask(index)}
+                    style={{ border: 'none', background: 'none', color: '#999', cursor: 'pointer' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {subtasks.length === 0 && (
+                <div style={{ color: '#ccc', textAlign: 'center', fontStyle: 'italic' }}>
+                  No steps yet.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -406,6 +406,8 @@ input {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow-x: auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .ai-section {

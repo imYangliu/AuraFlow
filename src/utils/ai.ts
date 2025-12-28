@@ -54,7 +54,7 @@ export async function generateAIResponse(prompt: string, config: AIConfig): Prom
   }
 }
 
-export async function generateTaskPlan(taskTitle: string, config: AIConfig): Promise<string> {
+export async function generateTaskPlan(taskTitle: string, config: AIConfig): Promise<string[]> {
   let baseUrl = config.baseUrl || import.meta.env.VITE_AI_BASE_URL || 'https://api.openai.com/v1';
   const apiKey = config.apiKey || import.meta.env.VITE_AI_API_KEY;
 
@@ -66,11 +66,11 @@ export async function generateTaskPlan(taskTitle: string, config: AIConfig): Pro
   if (!apiKey) {
     console.warn('No API Key provided, returning mock plan.');
     return new Promise(resolve => setTimeout(() => {
-      resolve(`
-- [ ] Step 1: Planning for "${taskTitle}"
-- [ ] Step 2: Execution
-- [ ] Step 3: Review
-      `);
+      resolve([
+        `规划任务 "${taskTitle}"`,
+        "开始执行",
+        "复盘总结"
+      ]);
     }, 1000));
   }
 
@@ -86,7 +86,7 @@ export async function generateTaskPlan(taskTitle: string, config: AIConfig): Pro
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful productivity assistant. Given a task title, generate a simple, actionable 3-5 step plan to complete it. Keep it concise.'
+            content: 'You are a helpful productivity assistant. Given a task title, generate a simple, actionable 3-5 step plan to complete it. Return a JSON object with a "subtasks" field containing an array of strings, where each string is a step. Output ONLY valid JSON. Please ensure the content is in Chinese.'
           },
           {
             role: 'user',
@@ -94,6 +94,7 @@ export async function generateTaskPlan(taskTitle: string, config: AIConfig): Pro
           }
         ],
         temperature: 0.7,
+        response_format: { type: "json_object" }
       }),
     });
 
@@ -103,14 +104,16 @@ export async function generateTaskPlan(taskTitle: string, config: AIConfig): Pro
     }
 
     const data = await response.json();
-    return data.choices[0]?.message?.content || 'No response from AI.';
+    const content = data.choices[0]?.message?.content;
+    const parsed = JSON.parse(content);
+    return parsed.subtasks || [];
   } catch (error) {
     console.error('AI Request Failed:', error);
     throw error;
   }
 }
 
-export async function analyzeTaskInput(input: string, config: AIConfig): Promise<{ title: string; plan: string }> {
+export async function analyzeTaskInput(input: string, config: AIConfig): Promise<{ title: string; subtasks: string[] }> {
   let baseUrl = config.baseUrl || import.meta.env.VITE_AI_BASE_URL || 'https://api.openai.com/v1';
   const apiKey = config.apiKey || import.meta.env.VITE_AI_API_KEY;
   const model = config.model || import.meta.env.VITE_AI_MODEL || 'gpt-4o-mini';
@@ -125,11 +128,11 @@ export async function analyzeTaskInput(input: string, config: AIConfig): Promise
     return new Promise(resolve => setTimeout(() => {
       resolve({
         title: input.length > 20 ? input.substring(0, 20) + '...' : input,
-        plan: `
-- [ ] Analyze "${input}"
-- [ ] Break down tasks
-- [ ] Start execution
-        `
+        subtasks: [
+          `Analyze "${input}"`,
+          "Break down tasks",
+          "Start execution"
+        ]
       });
     }, 1500));
   }
@@ -146,7 +149,7 @@ export async function analyzeTaskInput(input: string, config: AIConfig): Promise
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful productivity assistant. Analyze the user input. Return a JSON object with "title" (concise task name) and "plan" (markdown list of steps). Output ONLY valid JSON.'
+            content: 'You are a helpful productivity assistant. Analyze the user input. Return a JSON object with "title" (concise task name) and "subtasks" (array of strings). Output ONLY valid JSON.'
           },
           {
             role: 'user',

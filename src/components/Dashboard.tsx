@@ -8,7 +8,7 @@ import TopBar from './TopBar';
 import TimerDisplay from './TimerDisplay';
 import TaskList from './TaskList';
 import { translations } from '../i18n/translations';
-import type { Task, Session, AppConfig, Language } from '../types';
+import type { Task, Session, AppConfig, Language, Subtask } from '../types';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'timer' | 'stats'>('timer');
@@ -173,7 +173,16 @@ export default function Dashboard() {
     }
   };
 
-  const handleStartTask = (taskTitle: string, plan?: string) => {
+  const handleStartTask = (taskTitle: string, subtasksOrPlan?: Subtask[] | string) => {
+    let plan: string | undefined;
+    let subtasks: Subtask[] | undefined;
+
+    if (Array.isArray(subtasksOrPlan)) {
+      subtasks = subtasksOrPlan;
+    } else {
+      plan = subtasksOrPlan;
+    }
+
     let task = tasks.find(t => t.title === taskTitle);
     if (!task) {
       task = {
@@ -183,7 +192,8 @@ export default function Dashboard() {
         completed: false,
         status: 'pending',
         pomodoros: 0,
-        plan
+        plan,
+        subtasks
       };
       setTasks(prev => [...prev, task!]);
     }
